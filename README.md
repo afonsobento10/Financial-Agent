@@ -128,7 +128,9 @@ but the ability to **translate that technology into meaningful business advantag
 ### Architecture
 
 ```
-DataLoader.py  →  data/*.csv  →  tools.py  →  agent.py (LangGraph + Ollama)  →  app.py (Streamlit)
+DataLoader.py  →  data/all_stocks.csv  →  decision_engine.py (model.ipynb: RF classifier + regressor)
+                                      ↓
+                               tools.py  →  agent.py (LangGraph + Ollama)  →  app.py (Streamlit)
 ```
 
 ### Prerequisites
@@ -148,7 +150,7 @@ cd Financial-Agent
 pip install -r requirements.txt
 ```
 
-This installs: `pandas`, `numpy`, `yfinance`, `langgraph`, `langchain-core`, `langchain-ollama`, `streamlit`.
+This installs: `pandas`, `numpy`, `yfinance`, `scikit-learn`, `joblib`, `langgraph`, `langchain-core`, `langchain-ollama`, `streamlit`.
 
 ### Run the app (recommended for demo)
 
@@ -160,9 +162,17 @@ python DataLoader.py
 
 Creates `data/AAPL.csv`, `data/MSFT.csv`, etc. (10 US stocks in `Config.STOCKS`).
 
-**Step 2 — Start Ollama** (desktop app or `ollama serve`).
+**Step 2 — Train the ML model (once, or after new data):**
 
-**Step 3 — Launch the UI:**
+```bash
+python decision_engine.py
+```
+
+Saves `models/decision_model.pkl` (classifier: up/down from `return_1d`; regressor: close price — same as `model.ipynb`). The agent uses this for `get_trading_signal` (auto-trains on first use if missing).
+
+**Step 3 — Start Ollama** (desktop app or `ollama serve`).
+
+**Step 4 — Launch the UI:**
 
 ```bash
 streamlit run app.py
@@ -182,7 +192,8 @@ python agent.py
 |------|------|
 | `Config.py` | Stocks list, dates, RSI thresholds |
 | `DataLoader.py` | Download data + technical indicators → CSV |
-| `tools.py` | Market tools (summary, signal, compare, calculator) |
+| `decision_engine.py` | RandomForest ML model (train + predict) |
+| `tools.py` | Market tools (summary, ML signal, compare, calculator) |
 | `agent.py` | LangGraph agent + Ollama |
 | `prompts.py` | System prompt for the fund assistant |
 | `app.py` | Streamlit frontend |

@@ -8,5 +8,9 @@ langgraph>=0.2.0
 langchain-core>=0.3.0
 langchain-ollama>=0.2.0
 
-# Presentation UI (Phase D)
+# ML decision engine
+scikit-learn>=1.3.0
+joblib>=1.3.0
+
+# Presentation UI
 streamlit>=1.28.0

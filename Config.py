@@ -10,10 +10,11 @@ DATA_FOLDER = "data"  # CSV folder used by tools and Streamlit (offline demo)
 INITIAL_CAPITAL = 100_000  # euros
 
 # ── agente de decisão ─────────────────────────────────────────────────────────
-DECISION_MODEL   = "RandomForestRegressor"  # ou "RandomForestClassifier"
+DECISION_MODEL   = "RandomForestClassifier"  # model.ipynb: direction = return_1d > 0
 MAX_TREE_DEPTH   = 5
 RANDOM_STATE     = 42
-CONFIDENCE_THRESHOLD = 0.65   # confiança mínima para considerar o sinal
+CONFIDENCE_THRESHOLD = 0.65   # minimum probability to trust ML signal (else HOLD)
+MODEL_PATH       = "models/decision_model.pkl"
 
 # ── agente de qualidade ───────────────────────────────────────────────────────
 LLM_MODEL        = "gemma4:e2b"

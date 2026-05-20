@@ -17,6 +17,7 @@ from Config import (
     RSI_OVERSOLD,
     STOCKS,
 )
+from decision_engine import format_prediction, predict_signal, train_model
 
 # Cache CSV data in memory so each tool call does not re-read every file
 _market_cache: Optional[dict] = None
@@ -116,13 +117,8 @@ def get_stock_summary(ticker: str) -> str:
     )
 
 
-@tool
-def get_trading_signal(ticker: str) -> str:
-    """
-    Rule-based trading signal from RSI thresholds in Config.
-    Returns BUY, SELL, or HOLD with a short rationale.
-    ticker: e.g. AAPL, MSFT
-    """
+def _rule_based_signal(ticker: str) -> str:
+    """Fallback RSI signal when ML model is unavailable."""
     row, as_of = _latest_row(ticker)
     t = _normalize_ticker(ticker)
     rsi = float(row["rsi_14"])
@@ -131,22 +127,59 @@ def get_trading_signal(ticker: str) -> str:
 
     if rsi < RSI_OVERSOLD:
         signal = "BUY"
-        reason = f"RSI {rsi:.1f} is below oversold level ({RSI_OVERSOLD})"
+        reason = f"RSI {rsi:.1f} below oversold ({RSI_OVERSOLD})"
     elif rsi > RSI_OVERBOUGHT:
         signal = "SELL"
-        reason = f"RSI {rsi:.1f} is above overbought level ({RSI_OVERBOUGHT})"
+        reason = f"RSI {rsi:.1f} above overbought ({RSI_OVERBOUGHT})"
     else:
         signal = "HOLD"
-        reason = f"RSI {rsi:.1f} is between {RSI_OVERSOLD} and {RSI_OVERBOUGHT}"
+        reason = f"RSI {rsi:.1f} between {RSI_OVERSOLD} and {RSI_OVERBOUGHT}"
 
     price_vs_ma = "above MA20" if close > ma_20 else "below MA20"
-
     return (
-        f"Signal for {t} (as of {as_of.date()}): {signal}\n"
+        f"Rule-based signal for {t} (as of {as_of.date()}): {signal}\n"
         f"Reason: {reason}\n"
-        f"Close: USD {close:.2f} | {price_vs_ma} | MA20: USD {ma_20:.2f}\n"
-        f"Disclaimer: rule-based signal for decision support only, not guaranteed returns."
+        f"Close: USD {close:.2f} | {price_vs_ma} | MA20: USD {ma_20:.2f}"
     )
+
+
+@tool
+def get_trading_signal(ticker: str) -> str:
+    """
+    Trading signal from ML model (RandomForest classifier from model.ipynb).
+    Falls back to RSI rules if the model cannot load.
+    Returns BUY, SELL, or HOLD with confidence.
+    ticker: e.g. AAPL, MSFT
+    """
+    t = _normalize_ticker(ticker)
+    try:
+        result = predict_signal(t)
+        return format_prediction(result)
+    except Exception as e:
+        return (
+            f"ML signal unavailable ({e}). Using rule-based fallback:\n\n"
+            + _rule_based_signal(t)
+            + "\nDisclaimer: decision support only, not guaranteed returns."
+        )
+
+
+@tool
+def train_ml_model() -> str:
+    """
+    Retrain the RandomForest model from data/*.csv and save to models/.
+    Call when the user asks to refresh or train the ML model.
+    """
+    try:
+        metrics = train_model()
+        return (
+            "ML model trained and saved.\n"
+            f"Train accuracy: {metrics['train_accuracy']:.1%}\n"
+            f"Validation accuracy: {metrics['val_accuracy']:.1%}\n"
+            f"Test accuracy: {metrics['test_accuracy']:.1%}\n"
+            f"Rows used: {metrics['rows']}"
+        )
+    except Exception as e:
+        return f"Training failed: {e}"
 
 
 @tool
@@ -227,6 +260,7 @@ FINANCIAL_TOOLS = [
     list_available_stocks,
     get_stock_summary,
     get_trading_signal,
+    train_ml_model,
     compare_stocks,
     calculator,
 ]
