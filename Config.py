@@ -4,6 +4,7 @@ import os
 STOCKS = ["AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "NVDA", "JPM", "V", "UNH"]
 START_DATE = "2020-01-01"
 END_DATE   = "2024-12-31"
+DATA_FOLDER = "data"  # CSV folder used by tools (offline demo)
 
 # ── portfolio simulado ────────────────────────────────────────────────────────
 INITIAL_CAPITAL = 100_000  # euros
