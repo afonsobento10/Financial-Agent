@@ -1,9 +1,9 @@
-import yfinance as yf
-import pandas as pd
-import numpy as np
 import os
-import seaborn as sns
-import matplotlib.pyplot as plt
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
+
 from Config import STOCKS, START_DATE, END_DATE
 
 
@@ -194,6 +194,9 @@ def summary(data: dict) -> pd.DataFrame:
 # ── execução directa ──────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
     print("A descarregar dados...")
     data = load_all()
     save_csv(data)
@@ -201,7 +204,7 @@ if __name__ == "__main__":
     # resumo geral — bom para mostrar no ecrã durante a apresentação
     summary(data)
 
-    # correlação entre retornos diários
+    # correlação entre retornos diários (optional charts — needs seaborn)
     corr = correlation_matrix(data, on="return_1d")
     plt.figure(figsize=(10, 8))
     sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", center=0)
