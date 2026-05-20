@@ -2,6 +2,8 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import os
+import seaborn as sns
+import matplotlib.pyplot as plt
 from Config import STOCKS, START_DATE, END_DATE
 
 
@@ -116,11 +118,101 @@ def load_from_csv(folder: str = "data", tickers: list = STOCKS) -> dict:
     return data
 
 
+# ── análise de correlação (útil para apresentação) ────────────────────────────
+
+def correlation_matrix(data: dict, on: str = "return_1d") -> pd.DataFrame:
+    """
+    Matriz de correlação entre tickers.
+
+    Parâmetros
+    ----------
+    data : dicionário {ticker: DataFrame} devolvido por load_all().
+    on   : coluna a correlacionar — 'return_1d' (default, mais correcto
+           estatisticamente) ou 'close' (mais visual para apresentação).
+
+    Retorna
+    -------
+    DataFrame NxN com correlações de Pearson.
+    """
+    series = {ticker: df[on] for ticker, df in data.items()}
+    combined = pd.DataFrame(series).dropna()
+    corr = combined.corr()
+    print(f"\nCorrelação de '{on}' entre {list(data.keys())}:")
+    print(corr.round(2))
+    return corr
+
+
+
+SECTORES = {
+    "Tech":      ["AAPL", "MSFT", "GOOGL", "META", "NVDA"],
+    "Consumo":   ["AMZN", "TSLA"],
+    "Financeiro": ["JPM", "V"],
+    "Saúde":     ["UNH"],
+}
+
+def correlation_sectores(data: dict, sectores: dict = SECTORES) -> pd.DataFrame:
+    """
+    Correlação entre sectores — cada sector é a média dos retornos diários das suas empresas.
+    """
+    series = {}
+    for sector, tickers in sectores.items():
+        tickers_disponiveis = [t for t in tickers if t in data]
+        returns = pd.concat([data[t]["return_1d"] for t in tickers_disponiveis], axis=1)
+        series[sector] = returns.mean(axis=1)
+
+    corr = pd.DataFrame(series).dropna().corr()
+    print("\nCorrelação entre sectores:")
+    print(corr.round(2))
+    return corr
+
+
+def summary(data: dict) -> pd.DataFrame:
+    """
+    Tabela resumo por ticker: período, nº de dias, retorno total,
+    volatilidade anualizada e RSI médio. Boa para mostrar na apresentação.
+    """
+    rows = []
+    for ticker, df in data.items():
+        ret_total = (df["close"].iloc[-1] / df["close"].iloc[0] - 1) * 100
+        vol_anual = df["return_1d"].std() * np.sqrt(252) * 100
+        rows.append({
+            "ticker":        ticker,
+            "início":        df.index[0].date(),
+            "fim":           df.index[-1].date(),
+            "dias":          len(df),
+            "retorno_%":     round(ret_total, 1),
+            "volatilidade_%": round(vol_anual, 1),
+            "rsi_médio":     round(df["rsi_14"].mean(), 1),
+        })
+    tbl = pd.DataFrame(rows).set_index("ticker")
+    print("\n── Resumo do Portfolio ──────────────────────────────────")
+    print(tbl.to_string())
+    return tbl
+
+
+
 # ── execução directa ──────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     print("A descarregar dados...")
     data = load_all()
     save_csv(data)
-    print("\nPré-visualização AAPL:")
-    print(data["AAPL"][["close", "rsi_14", "macd", "volatility_20"]].tail(3).round(4))
+
+    # resumo geral — bom para mostrar no ecrã durante a apresentação
+    summary(data)
+
+    # correlação entre retornos diários
+    corr = correlation_matrix(data, on="return_1d")
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", center=0)
+    plt.title("Correlação entre Retornos Diários")
+    plt.tight_layout()
+    plt.show()
+
+    corr_sec = correlation_sectores(data)
+
+    plt.figure(figsize=(6, 5))
+    sns.heatmap(corr_sec, annot=True, fmt=".2f", cmap="coolwarm", center=0)
+    plt.title("Correlação entre Sectores")
+    plt.tight_layout()
+    plt.show()

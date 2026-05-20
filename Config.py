@@ -2,9 +2,8 @@ import os
 
 # ── stocks e datas ────────────────────────────────────────────────────────────
 STOCKS = ["AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "NVDA", "JPM", "V", "UNH"]
-START_DATE = "2020-01-01"
+START_DATE = "2013-01-01"
 END_DATE   = "2024-12-31"
-DATA_FOLDER = "data"  # CSV folder used by tools (offline demo)
 
 # ── portfolio simulado ────────────────────────────────────────────────────────
 INITIAL_CAPITAL = 100_000  # euros
@@ -16,7 +15,7 @@ RANDOM_STATE     = 42
 CONFIDENCE_THRESHOLD = 0.65   # confiança mínima para considerar o sinal
 
 # ── agente de qualidade ───────────────────────────────────────────────────────
-LLM_MODEL        = "claude-haiku-4-5-20251001"
+LLM_MODEL        = "gemma4:e2b"
 QUALITY_SCORE_MIN = 7          # score mínimo (0-10) para aprovar decisão
 MAX_RETRIES       = 3          # máximo de tentativas antes de desistir
 
