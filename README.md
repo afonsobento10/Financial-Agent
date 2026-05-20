@@ -121,4 +121,18 @@ but the ability to **translate that technology into meaningful business advantag
 
 ---
 
+---
+
+## Our Solution — Quick Start
+
+```bash
+pip install -r requirements.txt
+python DataLoader.py
+streamlit run app.py
+```
+
+Terminal-only chat: `python agent.py`
+
+---
+
 ### 🏁 Brought to you by **EY AI Challenge**
