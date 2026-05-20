@@ -133,6 +133,8 @@ streamlit run app.py
 
 Terminal-only chat: `python agent.py`
 
+**Team git sync (fork → `afonsobento10/Financial-Agent`):** see [SYNC_GIT.md](SYNC_GIT.md)
+
 ---
 
 ### 🏁 Brought to you by **EY AI Challenge**
